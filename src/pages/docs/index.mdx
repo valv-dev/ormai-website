@@ -1,6 +1,65 @@
 ---
 layout: ../../layouts/DocsLayout.astro
-title: "Documentation"
+title: "Introduction"
 ---
 
-# Docs
+# Introduction
+
+valv lets an AI agent query and write to your database safely. The model emits a
+structured query, never raw SQL. valv validates that query against your schema,
+scopes it to the current caller with policies you write in code, compiles it to
+your database's SQL, and runs it.
+
+The model's query is treated as untrusted. It can't read a column you hid, see a
+row outside the caller's scope, call a function you didn't allow, or escape its
+tenant on a write. That holds not because the prompt asks nicely, but because
+valv rebuilds and re-checks the query on the server before any SQL exists.
+
+```ts
+const valv = await createValv(client, { schema: "introspect", defaultPolicy: "deny-all" })
+
+valv.policy("orders", (ctx) => ({
+  read: { tenant_id: ctx.tenant.id }, // every read is scoped to this tenant
+  fields: { deny: ["internal_notes"] }, // this column never reaches the model
+}))
+
+const tools = await valv.tools.aisdk(ctx) // hand to your agent
+```
+
+## Why valv
+
+Most ways to give an agent database access force a trade-off between power and
+safety. A raw SQL tool can read any column, any tenant's rows, or drop a table,
+and prompt injection passes straight through. Locking it down to a few
+hand-written endpoints kills the flexibility that made an agent worth using.
+
+valv removes the trade-off:
+
+- **Secure by construction.** The model composes a structured query. valv
+  re-validates and re-scopes it server-side, so safety doesn't depend on the
+  model behaving.
+- **Policies in code.** You decide which rows and columns each caller can reach
+  with TypeScript functions of your request context. Access is deny-all by
+  default.
+- **Real analytics.** Filters, aggregates, time-series, and top-N, not just key
+  lookups.
+- **Drops into your stack.** Use it with the Vercel AI SDK, the Anthropic,
+  OpenAI, or Gemini APIs, or over the Model Context Protocol (MCP). Postgres,
+  MySQL, SQLite, and ClickHouse are supported.
+
+## How it fits together
+
+valv has three layers:
+
+- **`@valv/core`** holds the query grammar, validation, policy engine, and the
+  tool layer. It's database-agnostic.
+- **An adapter** connects core to your database. `@valv/prisma` covers Postgres,
+  MySQL, SQLite, and CockroachDB; `@valv/clickhouse` covers ClickHouse.
+- **A transport** hands the tools to your agent: a provider tool format in your
+  own code, or an MCP server for a coding agent.
+
+## Next steps
+
+- [Installation](/docs/installation/): install an adapter for your database.
+- [Quickstart](/docs/quickstart/): connect, write a policy, and run a query.
+- [How it works](/docs/how-it-works/): the query lifecycle, end to end.

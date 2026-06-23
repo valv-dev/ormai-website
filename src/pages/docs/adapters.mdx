@@ -1,0 +1,68 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: "Adapters & databases"
+---
+
+# Adapters & databases
+
+An adapter connects `@valv/core` to a specific database. Everything above the
+adapter (the query grammar, validation, policy injection, and the tool layer)
+is database-agnostic and lives in core. This page lists the supported databases
+and explains what an adapter does.
+
+## Supported databases
+
+| Package           | Databases                                       | Install                                  |
+| ----------------- | ----------------------------------------------- | ---------------------------------------- |
+| `@valv/prisma`    | PostgreSQL, MySQL, SQLite, CockroachDB          | `npm i @valv/prisma @prisma/client`      |
+| `@valv/clickhouse` | ClickHouse                                      | `npm i @valv/clickhouse @clickhouse/client` |
+
+## Prisma
+
+The Prisma adapter reads its schema from your generated Prisma client, so you
+don't introspect or hand-define a catalog. Create valv with the client:
+
+```ts
+import { createValv } from "@valv/prisma"
+
+const valv = await createValv(prisma, { defaultPolicy: "deny-all" })
+```
+
+Prisma databases support all three write operations: `create`, `update`, and
+`delete`.
+
+## ClickHouse
+
+The ClickHouse adapter connects with a `@clickhouse/client` instance. Pass a
+database name and either introspect the live schema or hand-define one:
+
+```ts
+import { createValv } from "@valv/clickhouse"
+
+const valv = await createValv(client, {
+  schema: "introspect",
+  database: "analytics",
+  defaultPolicy: "deny-all",
+})
+```
+
+ClickHouse adds dialect functions to the query grammar, such as
+`toStartOfInterval` and `quantileTiming`. For writes, it supports `create`
+(insert) only.
+
+## What an adapter does
+
+The SQL emitter is shared, so an adapter doesn't write a compiler. It provides
+three things:
+
+- `introspect()` produces a catalog from the live database.
+- A small `Dialect` describes how to quote identifiers and bind parameters.
+- `execute()` runs the compiled SQL and returns rows.
+
+Because core owns validation, policy, and emit, every adapter inherits the same
+safety guarantees.
+
+## Next steps
+
+- [Schema](/docs/schema/): introspect or hand-define a catalog.
+- [Queries](/docs/queries/): the grammar shared across every adapter.

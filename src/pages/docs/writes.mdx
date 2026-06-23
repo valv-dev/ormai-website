@@ -1,0 +1,67 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: "Writes"
+---
+
+# Writes
+
+valv can let an agent change data, not just read it. Writes are off until you
+both allow them in a policy and expose the tool, and they carry stronger
+guarantees than reads. This page covers the write grammar, the policy axes, and
+the rules valv enforces.
+
+## Writes are off by default
+
+There are three write tools: `create`, `update`, and `delete`. Each is its own
+tool and its own policy axis, and all three default to denied. You turn a write
+on in two places: allow it in the policy, and expose its tool. See
+[Tools & providers](/docs/tools/) for exposing the tools.
+
+```ts
+valv.policy("orders", (ctx) => ({
+  read: { tenant_id: ctx.tenant.id },
+  create: { tenant_id: ctx.tenant.id }, // tenant_id is force-set on insert
+  update: { tenant_id: ctx.tenant.id }, // AND-injected into the WHERE
+  delete: false, // never deletable
+  fields: { readOnly: ["status"] }, // readable, not writable
+}))
+```
+
+## What the guarantees are
+
+The write rules close the gaps a raw `INSERT` or `UPDATE` would leave open:
+
+- **`create`** force-injects the policy's owned fields, such as `tenant_id`,
+  onto the row. The model can't choose, omit, or override them, so it can't aim
+  a new row at another tenant.
+- **`update` and `delete`** AND the policy predicate into your `where`, and the
+  `where` is required. There's no implicit "all rows," and the model can only
+  touch rows already in its scope.
+- **Writable is separate from readable.** The columns a write sets are checked
+  against a writable allowlist. Scope columns, sensitive fields, and `readOnly`
+  fields are readable but not writable.
+- A `where` on a write can only filter by columns the caller is allowed to read.
+
+## Calling writes from your code
+
+Each write has a method on the valv instance. Like reads, they run through the
+full validate-and-inject pipeline:
+
+```ts
+await valv.create({ from: "orders", values: { status: "pending", total: 1200 } }, ctx)
+
+await valv.update(
+  { from: "orders", set: { status: "shipped" }, where: { /* Expr */ } },
+  ctx,
+)
+```
+
+## Database support
+
+Writes work on all Prisma databases (Postgres, MySQL, SQLite, and CockroachDB).
+ClickHouse supports `create` (insert) only.
+
+## Next steps
+
+- [Tools & providers](/docs/tools/): expose the write tools to a model.
+- [Policies](/docs/policies/): the full policy object, reads and writes.

@@ -1,0 +1,92 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: "Policies"
+---
+
+# Policies
+
+A policy decides what a caller may do with a resource. You write policies in
+TypeScript as functions of your request context, so access rules live in code
+next to the rest of your authorization logic, not in the prompt. Policies are
+where valv turns a loaded schema into scoped access.
+
+## A policy is a function of context
+
+`valv.policy(resource, fn)` registers a policy. The function receives your
+context and returns the rules for that resource:
+
+```ts
+valv.policy("orders", (ctx) => ({
+  read: { tenant_id: ctx.tenant.id }, // row filter
+  fields: { deny: ["internal_notes"] }, // hidden column
+}))
+```
+
+valv calls this function on every request, so the rules reflect the current
+caller. Nothing here is cached across requests.
+
+## Controlling rows with `read`
+
+The `read` axis decides which rows a caller can see. It takes one of three
+forms:
+
+| `read` value      | Meaning                                          |
+| ----------------- | ------------------------------------------------ |
+| `true` / `false`  | Allow or deny the resource outright.             |
+| `{ field: value }` | A row filter, AND-ed into the query server-side. |
+
+A row filter is the core of multi-tenant scoping. valv injects it into the
+`WHERE` clause _after_ it parses the model's query, so the model can't widen or
+remove it:
+
+```ts
+valv.policy("orders", (ctx) => ({
+  read: { tenant_id: ctx.tenant.id },
+}))
+```
+
+## Hiding columns with `fields`
+
+The `fields` axis controls which columns reach the model. Use a denylist or an
+allowlist:
+
+```ts
+valv.policy("users", (ctx) => ({
+  read: { tenant_id: ctx.tenant.id },
+  fields: ctx.user.role === "support" ? { deny: ["email"] } : undefined,
+}))
+```
+
+- `fields.deny` hides specific columns.
+- `fields.allow` exposes only the listed columns.
+
+A denied column and a column that doesn't exist fail with the same error, so the
+model can't tell hidden columns apart from typos and can't probe for them.
+
+## A default policy with `"*"`
+
+Use `"*"` as the resource name to set a fallback policy for resources without
+their own. This pairs well with `defaultPolicy: "deny-all"` when you want a
+single broad rule:
+
+```ts
+valv.policy("*", (ctx) => ({ read: { tenant_id: ctx.tenant.id } }))
+```
+
+## Writes
+
+The same policy object carries the write axes: `create`, `update`, and `delete`
+(with `write` as a shorthand for create plus update). They default to denied,
+and they have stronger rules than reads. See [Writes](/docs/writes/) for the
+details.
+
+## Discovery follows policy
+
+The discovery tools (`list_resources`, `search_resources`, `describe_resource`)
+only surface what the caller may read. A resource the policy denies never
+appears in discovery, so the model doesn't learn it exists.
+
+## Next steps
+
+- [Queries](/docs/queries/): what a caller can ask of an allowed resource.
+- [Writes](/docs/writes/): create, update, and delete rules.

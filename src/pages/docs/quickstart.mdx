@@ -1,0 +1,91 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: "Quickstart"
+---
+
+# Quickstart
+
+This guide takes you from an empty file to an agent answering a question over
+your database. You connect valv, write one policy, hand the tools to a model,
+and let it run a query. The example uses ClickHouse and the Vercel AI SDK; the
+shape is identical for Prisma.
+
+Before you start, [install an adapter](/docs/installation/) for your database.
+
+> **Using a coding agent?** To point a tool like Claude Code at a database with
+> no code, go straight to [MCP server](/docs/mcp-server/) instead.
+
+## 1. Connect
+
+`createValv` loads your schema on construction, so the instance is ready to use.
+Call it once at startup.
+
+```ts
+import { createValv } from "@valv/clickhouse"
+
+const valv = await createValv(client, {
+  schema: "introspect", // read the live schema
+  database: "analytics",
+  defaultPolicy: "deny-all", // every resource is hidden until you allow it
+})
+```
+
+`defaultPolicy: "deny-all"` is the recommended setting: a resource stays
+invisible to the model until you write a policy for it.
+
+## 2. Write a policy
+
+A policy is a function of your request context. It decides what the caller may
+read, per resource. Here every read of `orders` is scoped to the caller's
+tenant:
+
+```ts
+valv.policy("orders", (ctx) => ({
+  read: { tenant_id: ctx.tenant.id },
+}))
+```
+
+The model can't see, widen, or remove this filter. valv injects it into the
+`WHERE` clause on the server. See [Policies](/docs/policies/) for row filters,
+hidden columns, and write rules.
+
+## 3. Hand the tools to your agent
+
+`valv.tools.aisdk(ctx)` returns self-executing tools bound to the current
+context. Pass them to the model along with the user's question:
+
+```ts
+import { generateText, stepCountIs } from "ai"
+
+const ctx = { user: { id: "u1", role: "analyst" }, tenant: { id: "acme" } }
+
+const { text } = await generateText({
+  model,
+  tools: await valv.tools.aisdk(ctx),
+  stopWhen: stepCountIs(6),
+  prompt: "What's our revenue per order status this month?",
+})
+```
+
+The model gets four tools: `list_resources`, `search_resources`,
+`describe_resource`, and `query`. It discovers your schema, composes a query,
+and valv scopes it to `acme`, compiles it to ClickHouse SQL, runs it, and hands
+back rows.
+
+## Using Prisma instead
+
+The only change is the import and connection. Prisma reads the schema from your
+generated client, so you don't pass `schema` or `database`:
+
+```ts
+import { createValv } from "@valv/prisma"
+
+const valv = await createValv(prisma, { defaultPolicy: "deny-all" })
+```
+
+## Next steps
+
+- [How it works](/docs/how-it-works/): what happens between the model and your
+  database.
+- [Policies](/docs/policies/): scope rows, hide columns, and allow writes.
+- [Tools & providers](/docs/tools/): use Anthropic, OpenAI, Gemini, or MCP.

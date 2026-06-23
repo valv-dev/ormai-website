@@ -1,0 +1,91 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: "MCP server"
+---
+
+# MCP server
+
+`@valv/mcp` is a zero-config Model Context Protocol (MCP) server. Point it at a
+connection string and it serves your database to a coding agent like Claude
+Code, with the same validation and policy enforcement as the library. No code
+required.
+
+By default it serves the four read tools and is read-only across all tables. You
+narrow access with environment variables or a policy file.
+
+## Guided setup
+
+The fastest way in probes your database, lets you choose access, and writes the
+config for you:
+
+```bash
+npx @valv/mcp init
+```
+
+It prompts for a connection string, confirms the dialect, connects and shows
+your tables, offers read-only, pick-tables, or a policy-file stub, and writes
+the `.mcp.json` entry.
+
+## Manual setup
+
+Add the server to your `.mcp.json` (or your Claude Desktop config) and point it
+at a connection string:
+
+```json
+{
+  "mcpServers": {
+    "db": {
+      "command": "npx",
+      "args": ["-y", "@valv/mcp"],
+      "env": { "DATABASE_URL": "postgresql://user:pass@localhost:5432/app" }
+    }
+  }
+}
+```
+
+For ClickHouse, use the HTTP URL and a database name:
+
+```json
+"env": { "DATABASE_URL": "http://localhost:8123", "VALV_DATABASE": "analytics" }
+```
+
+## Configuration
+
+Configure the server with environment variables:
+
+| Variable           | Description                                                       |
+| ------------------ | ----------------------------------------------------------------- |
+| `DATABASE_URL`     | Connection string (required; or pass as the first CLI argument).  |
+| `VALV_PROVIDER`    | `postgresql`, `mysql`, `sqlite`, or `clickhouse`. Inferred when omitted. |
+| `VALV_DATABASE`    | Database name (ClickHouse).                                       |
+| `VALV_TABLES`      | Comma-separated allowlist; only these tables are exposed.         |
+| `VALV_EXCLUDE`     | Comma-separated denylist, applied after the allowlist.            |
+| `VALV_POLICY_FILE` | Path to a policy module for tenant scoping or hidden fields.      |
+| `VALV_CONTEXT`     | JSON context the policy reads, such as `{"tenant":{"id":"acme"}}`. |
+| `VALV_HTTP_PORT`   | Serve over Streamable HTTP on this port instead of stdio.         |
+
+## Policy file
+
+Without a policy file, access is read-only across all tables. To restrict which
+tables and columns the agent sees, point `VALV_POLICY_FILE` at a module that
+receives the configured valv instance:
+
+```js
+// valv.policy.cjs
+module.exports = (valv) => {
+  valv.policy("orders", () => ({
+    read: true, // allow reads (or { column: value } to filter rows)
+    fields: { deny: ["internal_notes"] }, // hide columns from the agent
+  }))
+  // Tables without a policy are denied.
+}
+```
+
+For per-request row scoping by real user or tenant identity, use
+[MCP in your app](/docs/mcp-sdk/), where your code supplies identity per request.
+
+## Next steps
+
+- [MCP in your app](/docs/mcp-sdk/): serve MCP from your own server with
+  per-request context.
+- [Policies](/docs/policies/): the policy rules a policy file can use.

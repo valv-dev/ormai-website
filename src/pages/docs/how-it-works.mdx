@@ -1,0 +1,85 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: "How it works"
+---
+
+# How it works
+
+valv treats the model's query as untrusted input and rebuilds it on the server
+before any SQL exists. This page follows one query through the pipeline so you
+can see where each guarantee is enforced.
+
+## The pipeline
+
+Every query the model emits flows through the same four stages:
+
+```
+LLM ──emits──▶  query (structured JSON, untrusted)
+                  │
+                  ▼
+              validate     check every column and function against the
+                  │        catalog and your policy
+                  ▼
+              inject        AND the tenant/row filter into WHERE
+                  │
+                  ▼
+              emit          compile to your dialect's SQL, with bound params
+                  │
+                  ▼
+              execute  ──▶  your database  ──▶  serialized rows
+```
+
+The model never produces SQL. It produces a query object, and valv owns every
+step after that.
+
+## A worked example
+
+Say the agent wants revenue per status. It emits this query:
+
+```jsonc
+{
+  "from": "orders",
+  "select": [
+    { "col": "status" },
+    { "fn": "sum", "args": [{ "kind": "col", "name": "total" }], "as": "revenue" }
+  ],
+  "groupBy": ["status"]
+}
+```
+
+With the policy `read: { tenant_id: ctx.tenant.id }` and `ctx.tenant.id` set to
+`acme`, valv emits:
+
+```sql
+SELECT `status`, sum(`total`) AS `revenue`
+FROM `orders`
+WHERE (`tenant_id` = {p0:String})   -- injected; the model never wrote this
+GROUP BY `status`
+-- params: p0 = "acme"
+```
+
+The model never wrote the `WHERE` clause, and it can't remove it. The tenant
+value becomes a bound parameter, never string-concatenated into the SQL.
+
+## What gets rejected
+
+Validation runs against your catalog and policy before emit, so an unsafe query
+fails before it can touch the database. valv rejects a query that:
+
+- selects a column the policy denies, or one that doesn't exist (both fail with
+  the same message, so the model can't probe for hidden columns),
+- references a function that isn't in the allowed registry,
+- hides a denied column inside a function argument, such as a `sumIf` predicate.
+
+## Why this is "by construction"
+
+Safety doesn't depend on the model behaving. The query is parsed into a typed
+tree, checked against the catalog and policy, and re-assembled into SQL by valv,
+not by the model. A clever prompt can change what the model asks for, but not
+what valv will compile and run.
+
+## Next steps
+
+- [Policies](/docs/policies/): write the rules that scope each request.
+- [Queries](/docs/queries/): the full grammar the model can express.
+- [Writes](/docs/writes/): the same guarantees, applied to mutations.

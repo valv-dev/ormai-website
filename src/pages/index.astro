@@ -10,7 +10,7 @@ import WhyGrid from "../components/WhyGrid.astro"
 import {codeToHtml} from "shiki"
 import {TS_CODE} from "../lib/snippets"
 
-const theme = "vesper"
+const theme = "tokyo-night"
 const highlighted = {
 	prisma: await codeToHtml(TS_CODE.prisma, {lang: "typescript", theme}),
 	clickhouse: await codeToHtml(TS_CODE.clickhouse, {lang: "typescript", theme}),

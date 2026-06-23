@@ -1,0 +1,49 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: "Saved queries & dashboards"
+---
+
+# Saved queries & dashboards
+
+Because the model emits a plain query object, you can store it and re-run it
+later. That turns a one-off question into a dashboard widget that refreshes
+without the model in the loop. This page covers persisting a query, replaying it
+safely, and deriving its output shape.
+
+## A query is just data
+
+The query the model produced is JSON. Persist it anywhere you'd store other
+application data:
+
+```ts
+await db.saveWidget(id, { query }) // it's just JSON
+```
+
+## Replay it without the model
+
+To refresh the widget, run the stored query with `valv.run`. The model isn't
+involved, so there's no token cost and no latency from a generation step:
+
+```ts
+const rows = await valv.run(widget.query, ctx)
+```
+
+Every replay goes through the full pipeline: the stored query is re-validated
+and re-scoped to the _current_ viewer's context. A saved query is never trusted
+just because it ran once. It can't outlive the permissions it was created under,
+and it returns each viewer only the rows their policy allows.
+
+## Derive the output shape
+
+`valv.resultSchema` returns a query's output columns and their types without
+running it. Use it to configure a chart or to detect drift when your schema
+changes:
+
+```ts
+const columns = valv.resultSchema(widget.query) // e.g. [{ name, type }, ...]
+```
+
+## Next steps
+
+- [Queries](/docs/queries/): the grammar a saved query is made of.
+- [Policies](/docs/policies/): how a replay is re-scoped per viewer.

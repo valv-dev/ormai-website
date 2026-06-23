@@ -1,0 +1,97 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: "Queries"
+---
+
+# Queries
+
+The model reads your database through one `query` tool. Instead of SQL, it emits
+a structured query object that valv validates and compiles. This page describes
+that grammar, so you know what an agent can express and what valv will reject.
+
+A query targets one resource and combines a `select` list, an optional `where`
+filter, and optional `groupBy`, `orderBy`, and `limit`. That covers real
+analytics without exposing arbitrary SQL.
+
+## Selecting columns and aggregates
+
+`select` is a list of entries. Each entry is either a column or a function call,
+and `as` names the output column:
+
+```jsonc
+{
+  "from": "orders",
+  "select": [
+    { "col": "status" },
+    { "fn": "count", "args": [], "as": "orders" },
+    { "fn": "sum", "args": [{ "kind": "col", "name": "total" }], "as": "revenue" }
+  ],
+  "groupBy": ["status"]
+}
+```
+
+A function's arguments are expressions, interpreted positionally against the
+function's signature. An argument can be a column, a literal value, or a
+predicate.
+
+## Filtering with `where`
+
+`where` is an expression tree. You compose comparisons with `and`, `or`, and
+`not`, to any depth:
+
+```jsonc
+{
+  "kind": "and",
+  "args": [
+    { "kind": "cmp", "op": ">=", "left": { "kind": "col", "name": "created_at" },
+      "right": { "kind": "value", "value": "2026-06-01" } },
+    { "kind": "cmp", "op": "=", "left": { "kind": "col", "name": "status" },
+      "right": { "kind": "value", "value": "paid" } }
+  ]
+}
+```
+
+The comparison operators are `=`, `!=`, `>`, `<`, `>=`, and `<=`. A `value` node
+becomes a bound parameter at emit time; values are never concatenated into SQL.
+
+## Common shapes
+
+The grammar is small, but it expresses the questions agents actually ask:
+
+- **Aggregates:** `count`, `sum`, and friends over a `groupBy`.
+- **Time-series:** bucket a timestamp with a function, then group by the alias.
+- **Top-N:** `orderBy` an aggregate alias and set a `limit`.
+- **Conditional aggregation:** `countIf` and `sumIf` take a predicate argument.
+
+```jsonc
+{
+  "from": "orders",
+  "select": [
+    { "col": "status" },
+    { "fn": "sum", "args": [{ "kind": "col", "name": "total" }], "as": "revenue" }
+  ],
+  "groupBy": ["status"],
+  "orderBy": [{ "col": "revenue", "dir": "desc" }],
+  "limit": 10
+}
+```
+
+## Allowed functions
+
+Every function the model uses must be in valv's registry, and its arguments are
+type-checked against the function's signature. Core ships a base set of
+functions; an adapter adds its dialect's functions. ClickHouse, for example,
+adds functions like `toStartOfInterval` and `quantileTiming`. A function that
+isn't registered fails validation.
+
+## Limits
+
+valv caps how many rows a query can return. A wide-open query can't dump an
+unbounded result set into the model's context or run away with your token
+budget. A query can request a smaller `limit`, but not exceed the cap.
+
+## Next steps
+
+- [Writes](/docs/writes/): the create, update, and delete grammar.
+- [Saved queries & dashboards](/docs/saved-queries/): store a query and re-run
+  it without the model.

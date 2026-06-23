@@ -1,0 +1,68 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: "MCP in your app"
+---
+
+# MCP in your app
+
+`@valv/mcp-sdk` turns a valv instance you configure into an MCP server, with the
+policy and per-request context in your hands. Use it when your app exposes its
+own data to a coding agent and you need each request scoped to a real user or
+tenant, not a fixed connection.
+
+This is the difference from the [zero-config server](/docs/mcp-server/): there
+you point at a connection string and set a fixed context; here you own the valv
+instance and resolve identity per request.
+
+## Serve over stdio
+
+Configure valv as you would in any app, then start a stdio server. The `context`
+resolver runs per request, so each call carries the right identity:
+
+```ts
+import { createValv } from "@valv/prisma"
+import { startStdioServer } from "@valv/mcp-sdk"
+
+const valv = await createValv(prisma, { defaultPolicy: "deny-all" })
+
+valv.policy("orders", (ctx) => ({ read: { tenant_id: ctx.tenant.id } }))
+
+await startStdioServer(valv, {
+  context: () => resolveIdentity(), // resolved per request from env, headers, etc.
+})
+```
+
+## Serve over HTTP
+
+To serve the same tools over Streamable HTTP, use `startHttpServer`. This suits
+a remote agent connecting to your service rather than a local process:
+
+```ts
+import { startHttpServer } from "@valv/mcp-sdk"
+
+await startHttpServer(valv, {
+  context: (request) => resolveIdentity(request), // derive identity from the request
+})
+```
+
+## Building the server yourself
+
+`createMcpServer` returns the underlying MCP server without starting a
+transport, so you can mount it inside an existing server or wire a custom
+transport:
+
+```ts
+import { createMcpServer } from "@valv/mcp-sdk"
+
+const server = createMcpServer(valv, { context: (request) => resolveIdentity(request) })
+```
+
+Because the context resolver runs per request, the same enforcement you write
+for your app applies to the agent: a request only ever sees the rows and columns
+its identity allows.
+
+## Next steps
+
+- [Policies](/docs/policies/): scope each request by user or tenant.
+- [MCP server](/docs/mcp-server/): the zero-config option for local coding
+  agents.

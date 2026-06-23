@@ -1,9 +1,275 @@
 ---
-import Layout from "./Layout.astro"
+import Layout from "./Layout.astro";
+import { docsNav } from "../lib/docsNav";
+
+const { frontmatter } = Astro.props;
+const title = frontmatter?.title ? `${frontmatter.title} · valv docs` : "valv docs";
+
+const pathname = Astro.url.pathname.replace(/\/$/, "") + "/";
+const isActive = (href: string) => pathname === href;
+
+// Raw markdown sources, loaded at build time, so "Copy page" can hand over the
+// real Markdown (not rendered HTML).
+const sources = import.meta.glob("/src/pages/docs/*.mdx", {
+	query: "?raw",
+	import: "default",
+	eager: true,
+}) as Record<string, string>;
+const slug = pathname === "/docs/" ? "index" : pathname.replace(/^\/docs\/|\/$/g, "");
+const rawMarkdown = (sources[`/src/pages/docs/${slug}.mdx`] ?? "").replace(
+	/^---\r?\n[\s\S]*?\r?\n---\r?\n+/,
+	"",
+);
 ---
 
-<Layout>
-    <div class="w-full max-w-2xl mx-auto">
-        <slot />
-    </div>
+<Layout title={title}>
+	<div class="min-h-screen">
+		<header class="sticky top-0 z-20 bg-bg/80 backdrop-blur-md">
+			<div class="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+				<a href="/" class="flex items-center text-fg hover:opacity-80 transition-opacity">
+					<span class="text-lg font-medium tracking-tight">valv</span>
+				</a>
+				<div class="flex items-center gap-1">
+					<a
+						href="https://github.com/valv-dev/valv"
+						target="_blank"
+						rel="noreferrer"
+						class="flex h-8 w-8 items-center justify-center rounded-sm text-fg-muted hover:text-fg transition-colors"
+					>
+						<i class="ph ph-github-logo"></i>
+					</a>
+					<button
+						id="nav-toggle"
+						type="button"
+						aria-label="Toggle navigation"
+						class="md:hidden flex h-8 w-8 items-center justify-center rounded-sm text-fg-muted hover:text-fg transition-colors cursor-pointer"
+					>
+						<i class="ph ph-list text-lg"></i>
+					</button>
+				</div>
+			</div>
+		</header>
+
+		<div
+			id="mobile-nav"
+			class="hidden md:hidden fixed inset-0 z-40 bg-bg overflow-y-auto flex-col"
+		>
+			<div class="flex h-14 shrink-0 items-center justify-between px-6">
+				<span class="text-lg font-medium tracking-tight text-fg">valv</span>
+				<button
+					id="nav-close"
+					type="button"
+					aria-label="Close navigation"
+					class="flex h-8 w-8 items-center justify-center rounded-sm text-fg-muted hover:text-fg transition-colors cursor-pointer"
+				>
+					<i class="ph ph-x text-lg"></i>
+				</button>
+			</div>
+			<nav class="flex flex-col gap-7 px-6 pb-10">
+				{
+					docsNav.map((group) => (
+						<div class="flex flex-col gap-1.5">
+							<div class="text-[11px] font-mono uppercase tracking-[0.15em] text-fg-faint">
+								{group.group}
+							</div>
+							{group.items.map((item) => (
+								<a
+									href={item.href}
+									class:list={[
+										"py-1 text-sm transition-colors",
+										isActive(item.href) ? "text-fg" : "text-fg-muted hover:text-fg",
+									]}
+								>
+									{item.label}
+								</a>
+							))}
+						</div>
+					))
+				}
+			</nav>
+		</div>
+
+		<div class="mx-auto flex max-w-6xl gap-12 px-6">
+			<aside class="hidden md:block w-56 shrink-0">
+				<nav class="sticky top-14 max-h-[calc(100vh-3.5rem)] overflow-y-auto py-10 pr-2 flex flex-col gap-7">
+					{
+						docsNav.map((group) => (
+							<div class="flex flex-col gap-1.5">
+								<div class="text-[11px] font-mono uppercase tracking-[0.15em] text-fg-faint">
+									{group.group}
+								</div>
+								{group.items.map((item) => (
+									<a
+										href={item.href}
+										class:list={[
+											"py-1 text-sm transition-colors",
+											isActive(item.href)
+												? "text-fg"
+												: "text-fg-muted hover:text-fg",
+										]}
+									>
+										{item.label}
+									</a>
+								))}
+							</div>
+						))
+					}
+				</nav>
+			</aside>
+
+			<main class="min-w-0 flex-1 py-10 md:py-14">
+				<div class="max-w-2xl flex justify-end">
+					<button
+						id="copy-page"
+						type="button"
+						data-md={rawMarkdown}
+						class="group inline-flex items-center gap-1.5 rounded-sm px-2 py-1 text-xs text-fg-subtle ring-[1px] ring-border hover:text-fg transition-colors cursor-pointer"
+					>
+						<i class="ph ph-copy"></i>
+						<span>Copy page</span>
+					</button>
+				</div>
+				<article class="docs-content mt-4 max-w-2xl">
+					<slot />
+				</article>
+			</main>
+		</div>
+	</div>
 </Layout>
+
+<style is:global>
+	.docs-content {
+		color: var(--color-fg-muted);
+		font-size: 0.95rem;
+		line-height: 1.7;
+	}
+	.docs-content > :first-child {
+		margin-top: 0;
+	}
+	.docs-content h1 {
+		color: var(--color-fg);
+		font-size: 2rem;
+		font-weight: 500;
+		letter-spacing: -0.02em;
+		line-height: 1.2;
+		margin: 0 0 1rem;
+	}
+	.docs-content h2 {
+		color: var(--color-fg);
+		font-size: 1.25rem;
+		font-weight: 500;
+		letter-spacing: -0.01em;
+		margin: 3rem 0 1rem;
+	}
+	.docs-content h3 {
+		color: var(--color-fg);
+		font-size: 1rem;
+		font-weight: 500;
+		margin: 2rem 0 0.5rem;
+	}
+	.docs-content p {
+		margin: 1rem 0;
+	}
+	.docs-content a {
+		color: var(--color-fg);
+		text-decoration: underline;
+		text-decoration-color: var(--color-border-strong);
+		text-underline-offset: 3px;
+	}
+	.docs-content a:hover {
+		text-decoration-color: var(--color-fg-muted);
+	}
+	.docs-content strong {
+		color: var(--color-fg);
+		font-weight: 500;
+	}
+	.docs-content ul,
+	.docs-content ol {
+		margin: 1rem 0;
+		padding-left: 1.25rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+	}
+	.docs-content ul {
+		list-style: disc;
+	}
+	.docs-content ol {
+		list-style: decimal;
+	}
+	.docs-content li::marker {
+		color: var(--color-fg-faint);
+	}
+	.docs-content :not(pre) > code {
+		font-family: var(--font-mono);
+		font-size: 0.82em;
+		background: var(--color-bg-muted);
+		color: var(--color-fg);
+		padding: 0.15em 0.4em;
+		border-radius: 3px;
+	}
+	.docs-content pre {
+		margin: 1.5rem 0;
+		padding: 1rem 1.25rem;
+		border-radius: 6px;
+		font-size: 0.82rem;
+		line-height: 1.6;
+		overflow-x: auto;
+		border: 1px solid var(--color-border);
+	}
+	.docs-content table {
+		width: 100%;
+		border-collapse: collapse;
+		margin: 1.5rem 0;
+		font-size: 0.875rem;
+	}
+	.docs-content th,
+	.docs-content td {
+		text-align: left;
+		vertical-align: top;
+		padding: 0.5rem 1rem 0.5rem 0;
+		border-bottom: 1px solid var(--color-border);
+	}
+	.docs-content th {
+		color: var(--color-fg);
+		font-weight: 500;
+		border-bottom-color: var(--color-border-strong);
+	}
+	.docs-content hr {
+		border: 0;
+		border-top: 1px solid var(--color-border);
+		margin: 2.5rem 0;
+	}
+	.docs-content blockquote {
+		border-left: 2px solid var(--color-border-strong);
+		padding-left: 1rem;
+		margin: 1.5rem 0;
+		color: var(--color-fg-subtle);
+	}
+</style>
+
+<script>
+	const btn = document.getElementById("copy-page");
+	const label = btn?.querySelector("span");
+	const original = label?.textContent ?? "Copy page";
+	btn?.addEventListener("click", async () => {
+		try {
+			await navigator.clipboard.writeText(btn.dataset.md ?? "");
+			btn.setAttribute("data-copied", "");
+			if (label) label.textContent = "Copied";
+			setTimeout(() => {
+				btn.removeAttribute("data-copied");
+				if (label) label.textContent = original;
+			}, 1500);
+		} catch {}
+	});
+
+	const mobileNav = document.getElementById("mobile-nav");
+	const setNav = (open: boolean) => {
+		mobileNav?.classList.toggle("hidden", !open);
+		mobileNav?.classList.toggle("flex", open);
+		document.body.style.overflow = open ? "hidden" : "";
+	};
+	document.getElementById("nav-toggle")?.addEventListener("click", () => setNav(true));
+	document.getElementById("nav-close")?.addEventListener("click", () => setNav(false));
+</script>

@@ -1,0 +1,49 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: "Installation"
+---
+
+# Installation
+
+Install an adapter for your database. Each adapter pulls in `@valv/core`, so you
+don't install core directly. valv ships as ESM and targets current Node.js
+runtimes.
+
+## ClickHouse
+
+Install the ClickHouse adapter alongside the official client:
+
+```bash
+npm i @valv/clickhouse @clickhouse/client
+```
+
+You connect with a `@clickhouse/client` instance and pass a database name when
+you create valv. See [Schema](/docs/schema/) for connection details.
+
+## Prisma
+
+The Prisma adapter covers every Prisma-supported relational database: Postgres,
+MySQL, SQLite, and CockroachDB. Install it alongside your Prisma client:
+
+```bash
+npm i @valv/prisma @prisma/client
+```
+
+valv reads the schema from your generated Prisma client, so no extra schema
+configuration is needed.
+
+## Coding agents
+
+To expose a database to a coding agent like Claude Code, you don't add anything
+to a project. Run the MCP server on demand instead:
+
+```bash
+npx @valv/mcp init
+```
+
+See [MCP server](/docs/mcp-server/) for the guided setup and configuration.
+
+## Next steps
+
+- [Quickstart](/docs/quickstart/): wire valv to an agent in a few lines.
+- [Schema](/docs/schema/): introspect a live schema or define one by hand.

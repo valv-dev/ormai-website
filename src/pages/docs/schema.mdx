@@ -1,0 +1,84 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: "Schema"
+---
+
+# Schema
+
+valv needs a description of your database, called the catalog, to validate
+queries. It lists the resources (tables) a caller can reference, their fields,
+and their types. You can load the catalog from a live database or define it by
+hand.
+
+The catalog is loaded once, when you call `createValv`. That's why `createValv`
+is async and why you call it at startup rather than per request.
+
+## Introspect a live schema
+
+For ClickHouse, pass `schema: "introspect"` and the database name. valv reads
+the live schema on connect:
+
+```ts
+import { createValv } from "@valv/clickhouse"
+
+const valv = await createValv(client, {
+  schema: "introspect",
+  database: "analytics",
+  defaultPolicy: "deny-all",
+})
+```
+
+With Prisma, the schema comes from your generated client, so you don't pass a
+`schema` option at all:
+
+```ts
+import { createValv } from "@valv/prisma"
+
+const valv = await createValv(prisma, { defaultPolicy: "deny-all" })
+```
+
+## Define a schema by hand
+
+You can also pass a catalog directly instead of introspecting. A hand-defined
+schema is useful for tests, for exposing a curated subset of a database, or for
+running the pipeline with no database connection at all.
+
+```ts
+const valv = await createValv(client, {
+  schema: {
+    orders: {
+      fields: {
+        id: "string",
+        tenant_id: "string",
+        status: "string",
+        total: "number",
+        created_at: "datetime",
+      },
+    },
+  },
+  defaultPolicy: "deny-all",
+})
+```
+
+## The default policy
+
+`defaultPolicy` controls what happens to a resource that has no explicit policy.
+Set it to `"deny-all"` so resources stay hidden until you opt them in with a
+[policy](/docs/policies/). This is the recommended default: a table you forget
+to write a policy for is invisible, not wide open.
+
+> **Note:** Loading the schema only tells valv what _exists_. It doesn't grant
+> any access. A caller sees a resource only when a policy allows it.
+
+## Inspecting the catalog
+
+Two helpers let you read the loaded catalog from your own code:
+
+- `await valv.resources()` returns the resource names the schema knows about.
+- `await valv.describe()` returns a fuller descriptor, including fields and
+  types, for each resource.
+
+## Next steps
+
+- [Policies](/docs/policies/): turn a loaded schema into scoped access.
+- [Queries](/docs/queries/): what the model can ask of a resource.

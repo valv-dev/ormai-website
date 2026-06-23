@@ -1,0 +1,77 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: "Tools & providers"
+---
+
+# Tools & providers
+
+valv gives your agent a small set of tools, formatted for the provider you use.
+This page covers the tools the model gets, how to format them for each provider,
+and how to turn individual tools on or off.
+
+## The tools the model gets
+
+By default, valv exposes four read tools:
+
+- `list_resources` lists the resources the caller may read.
+- `search_resources` finds resources by name or description.
+- `describe_resource` returns a resource's fields and types.
+- `query` runs a [structured query](/docs/queries/).
+
+The first three are discovery tools, and they're policy-filtered: they only
+surface what the caller may read, so the model never learns about a resource it
+can't reach. The [write tools](/docs/writes/) (`create`, `update`, `delete`) are
+off by default.
+
+## Formatting tools for a provider
+
+`valv.tools.<format>(ctx, options)` returns tools bound to a request context.
+Choose the format that matches your provider:
+
+```ts
+valv.tools.anthropic(ctx) // Anthropic Messages API
+valv.tools.openai(ctx) // OpenAI and compatible APIs
+valv.tools.gemini(ctx) // Google Gemini
+await valv.tools.aisdk(ctx) // Vercel AI SDK (async; needs the `ai` package)
+valv.tools.neutral(ctx) // raw, framework-agnostic
+```
+
+The `aisdk` format returns self-executing tools: the SDK runs them for you, as
+shown in the [Quickstart](/docs/quickstart/). It's async because it imports the
+optional `ai` peer dependency.
+
+## Dispatching a tool call yourself
+
+The provider formats (`anthropic`, `openai`, `gemini`) return tool _definitions_
+for the API request. When the model calls one, you dispatch it with `runTool`:
+
+```ts
+const result = await valv.runTool(call.name, call.input, ctx)
+```
+
+This runs the same validated, policy-scoped pipeline regardless of provider.
+
+## Turning tools on and off
+
+Pass an options object to enable or disable individual tools. Discovery tools
+are on by default; write tools are off:
+
+```ts
+// Drop the discovery tools, keep query
+valv.tools.anthropic(ctx, { list: false, search: false, describe: false })
+
+// Enable writes
+await valv.tools.aisdk(ctx, { create: true, update: true })
+```
+
+Enabling a write tool here still requires the matching policy axis to allow it.
+See [Writes](/docs/writes/).
+
+## Next steps
+
+- [Writes](/docs/writes/): expose create, update, and delete tools.
+- [MCP in your app](/docs/mcp-sdk/): serve these same tools over MCP with
+  per-request identity.
+
+To point a standalone coding agent at a database instead, see
+[MCP server](/docs/mcp-server/).

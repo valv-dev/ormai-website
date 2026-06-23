@@ -10,6 +10,10 @@ import mdx from '@astrojs/mdx';
 export default defineConfig({
   integrations: [react(), mdx()],
 
+  markdown: {
+    shikiConfig: { theme: "tokyo-night" },
+  },
+
   vite: {
     plugins: [tailwindcss()]
   }
