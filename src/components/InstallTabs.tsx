@@ -94,7 +94,11 @@ export function InstallTabs({ highlighted }: InstallTabsProps) {
           <CopyCommand
             key={`${active}-${db}`}
             command={command(active, db)}
-            className="w-full h-[32px] text-white/60 hover:text-white/80 transition-all gap-3 cursor-pointer bg-transparent flex items-center justify-center"
+            className={`w-full h-[32px] text-white/60 hover:text-white/80 transition-all gap-3 cursor-pointer bg-transparent flex items-center ${
+              active === "ts"
+                ? "justify-start pl-4 pr-28 sm:justify-center sm:px-0"
+                : "justify-center"
+            }`}
           />
           {active === "ts" && (
             <div className="absolute inset-y-0 right-0 flex items-stretch">
@@ -103,14 +107,25 @@ export function InstallTabs({ highlighted }: InstallTabsProps) {
             </div>
           )}
         </div>
-        <div className="w-full rounded-b-sm ring-[1px] ring-border bg-bg overflow-x-auto">
+        <div
+          className={`w-full rounded-b-sm ring-[1px] ring-border bg-bg ${
+            active === "ts" ? "overflow-x-auto" : "overflow-hidden"
+          }`}
+        >
           {active === "ts" ? (
             <div
               className="install-code text-xs leading-relaxed"
               dangerouslySetInnerHTML={{ __html: highlighted[db] }}
             />
           ) : (
-            <McpConversation />
+            <video
+              src="/video.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="block w-full aspect-[1814/1178]"
+            />
           )}
         </div>
       </div>
@@ -156,88 +171,5 @@ function DbSelect({
         </Select.Positioner>
       </Select.Portal>
     </Select.Root>
-  )
-}
-
-const CHART = [
-  { label: "Oak", value: 1240 },
-  { label: "Walnut", value: 980 },
-  { label: "Maple", value: 760 },
-  { label: "Pine", value: 540 },
-  { label: "Birch", value: 410 },
-]
-const CHART_MAX = 1240
-
-/** A mock Claude Code transcript: the agent queries via the valv MCP, then
-    charts the result with the /valv skill. */
-function McpConversation() {
-  return (
-    <div className="p-5 flex flex-col gap-4 font-mono text-[13px] leading-relaxed text-left">
-      <div className="flex gap-2.5">
-        <span className="select-none text-fg-subtle">&gt;</span>
-        <span className="text-fg">
-          <span className="text-blue-400/90">/valv</span> Which materials get
-          downloaded the most?
-        </span>
-      </div>
-
-      <div className="flex gap-2.5">
-        <span className="select-none text-blue-400/80">⏺</span>
-        <span className="text-fg-muted">Let me query that and chart it.</span>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <div className="flex gap-2.5">
-          <span className="select-none text-blue-400/80">⏺</span>
-          <span className="text-fg">
-            query <span className="text-fg-subtle">(valv MCP)</span>
-          </span>
-        </div>
-        <div className="flex gap-2.5 pl-[1.4em] text-fg-subtle">
-          <span className="select-none text-fg-faint">⎿</span>
-          <span>select material, count() · group by material → 6 rows</span>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <div className="flex gap-2.5">
-          <span className="select-none text-blue-400/80">⏺</span>
-          <span className="text-fg">
-            /valv <span className="text-fg-subtle">skill</span>
-          </span>
-        </div>
-        <div className="flex gap-2.5 pl-[1.4em] text-fg-subtle">
-          <span className="select-none text-fg-faint">⎿</span>
-          <span>downloads-by-material.html</span>
-        </div>
-      </div>
-
-      <div className="ml-[1.4em] rounded-sm ring-[1px] ring-border bg-bg-elevated p-4 flex flex-col gap-3 font-sans">
-        <div className="text-xs text-fg-muted">Downloads by material · this month</div>
-        <div className="flex flex-col gap-2">
-          {CHART.map((row) => (
-            <div key={row.label} className="flex items-center gap-3 text-xs">
-              <span className="w-14 shrink-0 text-fg-muted">{row.label}</span>
-              <div className="flex-1 h-4 rounded-[2px] bg-bg-muted overflow-hidden">
-                <div
-                  className="h-full rounded-[2px] bg-fg-muted"
-                  style={{ width: `${(row.value / CHART_MAX) * 100}%` }}
-                />
-              </div>
-              <span className="w-12 shrink-0 text-right tabular-nums text-fg-subtle">
-                {row.value.toLocaleString()}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex gap-2.5">
-        <span className="select-none text-blue-400/80">⏺</span>
-        <span className="text-fg-muted">
-          Oak leads at 1,240 downloads — well ahead of walnut and maple.
-        </span>
-      </div>
-    </div>
   )
 }

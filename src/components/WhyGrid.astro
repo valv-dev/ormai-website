@@ -1,0 +1,46 @@
+---
+const points = [
+	{
+		icon: "ph-shield-check",
+		title: "Secure by construction",
+		desc: "The model never writes SQL. Every query is rebuilt and re-checked against your schema on the server.",
+	},
+	{
+		icon: "ph-key",
+		title: "Policies in code",
+		desc: "Scope every row and column to the current caller with deny-by-default policies you write in TypeScript.",
+	},
+	{
+		icon: "ph-chart-bar",
+		title: "Real analytics",
+		desc: "Filters, aggregates, time-series, and top-N. The questions agents actually ask, not just key lookups.",
+	},
+	{
+		icon: "ph-coins",
+		title: "Token-aware",
+		desc: "Caps how much comes back, so a wide-open query can't flood the model's context or burn your budget.",
+	},
+	{
+		icon: "ph-database",
+		title: "Any database",
+		desc: "Postgres, MySQL, SQLite, or ClickHouse. valv introspects your live schema the moment you connect.",
+	},
+	{
+		icon: "ph-plugs-connected",
+		title: "Any agent",
+		desc: "Hand the tools to the Vercel AI SDK or expose them over MCP. It drops into the stack you already have.",
+	},
+];
+---
+
+<div class="grid grid-cols-1 gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+	{
+		points.map((p) => (
+			<div class="flex flex-col gap-3">
+				<i class={`ph ${p.icon} text-2xl text-fg-muted`} />
+				<h3 class="text-fg font-medium">{p.title}</h3>
+				<p class="text-sm leading-relaxed text-fg-muted">{p.desc}</p>
+			</div>
+		))
+	}
+</div>
