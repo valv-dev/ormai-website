@@ -2,9 +2,14 @@ import { useState } from "react"
 
 interface CopyCommandProps {
   command: string
+  /** Overrides the default standalone styling (border, radius, width). */
+  className?: string
 }
 
-export function CopyCommand({ command }: CopyCommandProps) {
+const defaultCls =
+  "w-full h-[32px] text-white/60 hover:text-white/80 transition-all gap-3 cursor-pointer rounded-t-sm ring-[1px] ring-border bg-bg flex items-center justify-center"
+
+export function CopyCommand({ command, className }: CopyCommandProps) {
   const [copied, setCopied] = useState(false)
   const [hasInteracted, setHasInteracted] = useState(false)
 
@@ -23,7 +28,7 @@ export function CopyCommand({ command }: CopyCommandProps) {
     <button
       type="button"
       onClick={onCopy}
-      className="w-full h-[32px] text-white/60 hover:text-white/80 transition-all gap-3 cursor-pointer rounded-t-sm ring-[1px] ring-border bg-bg flex items-center justify-center"
+      className={className ?? defaultCls}
     >
       <code className="text-xs font-mono">{command}</code>
       <i

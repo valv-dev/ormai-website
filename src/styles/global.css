@@ -36,3 +36,12 @@ body {
 html {
   overflow-x: clip;
 }
+
+/* Shiki output inside the install tabs: drop the theme background, pad it,
+   and let the panel's own bg show through. */
+.install-code pre.shiki {
+  background-color: transparent !important;
+  margin: 0;
+  padding: 1.25rem;
+  font-family: var(--font-mono);
+}

@@ -10,7 +10,7 @@ const REPULSION_RADIUS = 110
 const REPULSION_FORCE = 3.5
 const SPRING = 0.06
 const DAMPING = 0.82
-const TEXT = "riptide"
+const TEXT = "valv"
 
 const WAVE_SPEED = 5
 const WAVE_MAX_RADIUS = 280
@@ -24,9 +24,9 @@ const ENTRY_DURATION = 700
 const ENTRY_KICK = 8
 
 const COLOR_RADIUS = REPULSION_RADIUS
-const HOT_R = 30
-const HOT_G = 20
-const HOT_B = 180
+const HOT_R = 20
+const HOT_G = 10
+const HOT_B = 120
 
 const BAYER_8 = [
     [0, 32, 8, 40, 2, 34, 10, 42],

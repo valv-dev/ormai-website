@@ -6,6 +6,14 @@ import {ParticleDivider} from "../components/ParticleDivider"
 import {Faq} from "../components/Faq"
 import {Reveal} from "../components/Reveal"
 import {InstallTabs} from "../components/InstallTabs"
+import {codeToHtml} from "shiki"
+import {TS_CODE} from "../lib/snippets"
+
+const theme = "vesper"
+const highlighted = {
+	prisma: await codeToHtml(TS_CODE.prisma, {lang: "typescript", theme}),
+	clickhouse: await codeToHtml(TS_CODE.clickhouse, {lang: "typescript", theme}),
+}
 ---
 
 <Layout>
@@ -14,37 +22,45 @@ import {InstallTabs} from "../components/InstallTabs"
 		<ParticleBackground client:load flipped className="h-[25lvh]" />
 		<div class="w-full flex flex-col gap-8 max-w-2xl mx-auto px-4 pt-24 md:pt-32 pb-16 selection:bg-blue-800/20">
 			<ParticleField client:load />
-			<h1 class="text-center text-neutral-200 text-4xl md:text-5xl text-pretty font-medium -mt-4 leading-9 md:leading-12 tracking-tight motion-preset-blur-up-lg motion-delay-300">
-				The best way for your agents to talk to your database
+			<h1 class="text-center text-neutral-200 text-4xl md:text-5xl text-balanced font-medium -mt-4 leading-9 md:leading-14 tracking-tight motion-preset-blur-up-lg motion-delay-300">
+				Let agents query your database. Just not all of it.
 			</h1>
 			<div class="flex flex-col items-center md:flex-row gap-4 mx-auto mt-4 motion-preset-blur-up-lg motion-delay-500">
-				<button class="h-12 w-52 md:w-40 rounded-sm bg-fg text-bg text-sm font-medium cursor-pointer hover:-translate-y-0.5 transition-all">
+				<a href="/docs/" class="h-12 w-52 flex items-center justify-center md:w-40 rounded-sm bg-fg text-bg text-sm font-medium cursor-pointer hover:-translate-y-0.5 transition-all">
 					Quick Start
-				</button>
-				<button class="h-12 w-40 rounded-sm bg-bg ring-[0.5px] ring-fg-faint text-sm text-fg-muted cursor-pointer hover:text-fg hover:ring-fg-muted transition-all hover:-translate-y-0.5 group">
-					<i class="ph ph-star pr-1 inline-block translate-y-[1px]"></i>
+				</a>
+				<a href="https://github.com/valv-dev/valv" target="_blank" rel="noreferrer" class="h-12 w-40 flex flex-row items-center gap-0.5 justify-center rounded-sm bg-bg ring-[0.5px] ring-fg-faint text-sm text-fg-muted cursor-pointer hover:text-fg hover:ring-fg-muted transition-all hover:-translate-y-0.5 group">
+					<i class="ph ph-star pr-1 inline-block"></i>
 					Star on GitHub
-				</button>
+				</a>
 			</div>
 			<div class="w-full flex flex-col gap-32 mb-40 motion-preset-blur-up-lg motion-translate-y-in-[3%] motion-delay-600">
 				<div class="w-full mt-32">
-					<InstallTabs client:visible />
+					<InstallTabs highlighted={highlighted} client:visible />
 				</div>
 				<!-- <ParticleDivider className="-mt-28 -mb-28" client:load /> -->
 				<Reveal client:visible className="w-full flex flex-col gap-4">
 					<h2 class="text-2xl font-medium text-center">Why use it?</h2>
 					<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<div class="w-full h-[150px] rounded-sm ring-[1px] ring-border bg-bg flex items-center justify-center">
-							<span class="text-xs font-medium opacity-30">a</span>
+						<div class="w-full min-h-[150px] rounded-sm ring-[1px] ring-border bg-bg flex flex-col gap-3 p-5">
+							<i class="ph-fill ph-shield-check text-fg-muted text-2xl"></i>
+							<h3 class="text-fg font-medium">Secure by construction</h3>
+							<p class="text-sm text-fg-muted leading-relaxed">The model never writes SQL. Queries are rebuilt and re-checked against your schema on the server.</p>
 						</div>
-						<div class="w-full h-[150px] rounded-sm ring-[1px] ring-border bg-bg flex items-center justify-center">
-							<span class="text-xs font-medium opacity-30">b</span>
+						<div class="w-full min-h-[150px] rounded-sm ring-[1px] ring-border bg-bg flex flex-col gap-3 p-5">
+							<i class="ph-fill ph-key text-fg-muted text-2xl"></i>
+							<h3 class="text-fg font-medium">Policies in code</h3>
+							<p class="text-sm text-fg-muted leading-relaxed">Scope every read and write to the current user with deny-by-default policies in TypeScript.</p>
 						</div>
-						<div class="w-full h-[150px] rounded-sm ring-[1px] ring-border bg-bg flex items-center justify-center">
-							<span class="text-xs font-medium opacity-30">c</span>
+						<div class="w-full min-h-[150px] rounded-sm ring-[1px] ring-border bg-bg flex flex-col gap-3 p-5">
+							<i class="ph-fill ph-chart-bar text-fg-muted text-2xl"></i>
+							<h3 class="text-fg font-medium">Real analytics, one tool</h3>
+							<p class="text-sm text-fg-muted leading-relaxed">Filters, aggregates, time-series, and top-N — not just key lookups.</p>
 						</div>
-						<div class="w-full h-[150px] rounded-sm ring-[1px] ring-border bg-bg flex items-center justify-center">
-							<span class="text-xs font-medium opacity-30">d</span>
+						<div class="w-full min-h-[150px] rounded-sm ring-[1px] ring-border bg-bg flex flex-col gap-3 p-5">
+							<i class="ph-fill ph-plugs-connected text-fg-muted text-2xl"></i>
+							<h3 class="text-fg font-medium">Drops into your stack</h3>
+							<p class="text-sm text-fg-muted leading-relaxed">Postgres, MySQL, SQLite, or ClickHouse. Use it with the Vercel AI SDK or over MCP.</p>
 						</div>
 					</div>
 				</Reveal>
@@ -62,13 +78,10 @@ import {InstallTabs} from "../components/InstallTabs"
 			</div>
 		</div>
 		<footer class="relative w-full max-w-2xl mx-auto px-4 pb-16 flex items-center justify-center gap-6 text-sm text-fg-muted">
-			<a href="https://x.com/" target="_blank" rel="noreferrer" class="flex items-center gap-1.5 hover:text-fg transition-colors">
-				<i class="ph ph-x-logo"></i>
-			</a>
-			<a href="https://github.com/" target="_blank" rel="noreferrer" class="flex items-center gap-1.5 hover:text-fg transition-colors">
+			<a href="https://github.com/valv-dev/valv" target="_blank" rel="noreferrer" class="flex items-center gap-1.5 hover:text-fg transition-colors">
 				<i class="ph ph-github-logo"></i>
 			</a>
-			<a href="/docs" class="hover:text-fg transition-colors">
+			<a href="/docs/" class="hover:text-fg transition-colors">
 				Docs
 			</a>
 		</footer>
