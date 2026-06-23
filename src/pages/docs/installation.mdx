@@ -35,13 +35,15 @@ configuration is needed.
 ## Coding agents
 
 To expose a database to a coding agent like Claude Code, you don't add anything
-to a project. Run the MCP server on demand instead:
+to a project. Run the MCP server on demand, and optionally add the `/valv`
+charting skill:
 
 ```bash
-npx @valv/mcp init
+npx @valv/mcp init                                # MCP server
+npx skills add https://github.com/valv-dev --skill valv   # /valv charting skill
 ```
 
-See [MCP server](/docs/mcp-server/) for the guided setup and configuration.
+See [MCP server](/docs/mcp-server/) for the guided setup and the skill.
 
 ## Next steps
 

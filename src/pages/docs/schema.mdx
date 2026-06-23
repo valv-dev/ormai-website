@@ -70,6 +70,17 @@ to write a policy for is invisible, not wide open.
 > **Note:** Loading the schema only tells valv what _exists_. It doesn't grant
 > any access. A caller sees a resource only when a policy allows it.
 
+## Relations
+
+Relations connect resources so a query can [join](/docs/queries/#joins) across
+them. valv supports `belongsTo` and `hasMany` relations, and the model can only
+traverse the ones you declare.
+
+- **Prisma** relations are introspected from your client automatically, so joins
+  work with no extra setup.
+- **ClickHouse** has no foreign keys, so you declare each relation in your
+  hand-defined schema, including the join keys, so valv can resolve it.
+
 ## Inspecting the catalog
 
 Two helpers let you read the loaded catalog from your own code:

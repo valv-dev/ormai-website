@@ -9,9 +9,10 @@ The model reads your database through one `query` tool. Instead of SQL, it emits
 a structured query object that valv validates and compiles. This page describes
 that grammar, so you know what an agent can express and what valv will reject.
 
-A query targets one resource and combines a `select` list, an optional `where`
-filter, and optional `groupBy`, `orderBy`, and `limit`. That covers real
-analytics without exposing arbitrary SQL.
+A query starts from one resource and combines a `select` list, an optional
+`where` filter, and optional `groupBy`, `orderBy`, and `limit`. It can also pull
+in related resources through [joins](#joins). That covers real analytics without
+exposing arbitrary SQL.
 
 ## Selecting columns and aggregates
 
@@ -75,6 +76,34 @@ The grammar is small, but it expresses the questions agents actually ask:
   "limit": 10
 }
 ```
+
+## Joins
+
+To read from a related resource, qualify a column with `rel`, a relation path
+from the query's root. The model can only follow relations declared in your
+[schema](/docs/schema/); valv derives the joins and picks the keys.
+
+```jsonc
+{
+  "from": "orders",
+  "select": [
+    { "col": "name", "rel": ["customer"] }, // one hop: orders → customer
+    { "col": "name", "rel": ["customer", "region"] }, // multi-hop: → customer → region
+    { "fn": "sum", "args": [{ "kind": "col", "name": "total" }], "as": "revenue" }
+  ],
+  "groupBy": [{ "col": "name", "rel": ["customer"] }]
+}
+```
+
+A `rel` path works anywhere a column does: in `select`, `where`, `groupBy`, and
+`orderBy`.
+
+A join doesn't widen access. valv composes the policy of every table it touches,
+so each joined resource is scoped by its own row filter and field rules. A join
+can't reach a column you hid on the related table or rows outside the caller's
+scope. See [Policies](/docs/policies/#joins-compose-policy). To bound cost, valv
+caps the join depth, the number of joined tables, and the fan-out from `hasMany`
+relations, and every query runs under a statement timeout.
 
 ## Allowed functions
 

@@ -84,6 +84,20 @@ module.exports = (valv) => {
 For per-request row scoping by real user or tenant identity, use
 [MCP in your app](/docs/mcp-sdk/), where your code supplies identity per request.
 
+## The valv skill
+
+The `/valv` skill adds a slash command to a coding agent that queries your
+database through the MCP server and turns the result into a chart, written as a
+self-contained HTML file. Install it once:
+
+```bash
+npx skills add https://github.com/valv-dev --skill valv
+```
+
+With the MCP server configured, you can then ask the agent something like `/valv
+revenue by plan this month`. It runs a query through valv, scoped by your policy,
+and renders the rows as a chart.
+
 ## Next steps
 
 - [MCP in your app](/docs/mcp-sdk/): serve MCP from your own server with

@@ -80,6 +80,14 @@ The same policy object carries the write axes: `create`, `update`, and `delete`
 and they have stronger rules than reads. See [Writes](/docs/writes/) for the
 details.
 
+## Joins compose policy
+
+A [join](/docs/queries/#joins) doesn't escape your policies. When a query reads a
+related resource, that resource is scoped by its own policy too. valv applies
+each joined table's row filter and field rules, so a join can't read a column you
+hid on the related table or reach rows outside the caller's scope. A resource
+with no policy stays denied, even as the target of a join.
+
 ## Discovery follows policy
 
 The discovery tools (`list_resources`, `search_resources`, `describe_resource`)
