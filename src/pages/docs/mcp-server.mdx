@@ -98,6 +98,13 @@ With the MCP server configured, you can then ask the agent something like `/valv
 revenue by plan this month`. It runs a query through valv, scoped by your policy,
 and renders the rows as a chart.
 
+The skill also **learns your database as you use it**. The first time it
+describes a table, works out the dialect's time-bucket function, or maps a term
+like "revenue" to `sum(total)` on `orders`, it records that in `.valv/notes.md`
+in your working directory — so later sessions skip the rediscovery and start
+warm. The notes hold schema and semantics only, never query results, and the
+file is plain markdown you can read, edit, or pre-seed yourself.
+
 ## Next steps
 
 - [MCP in your app](/docs/mcp-sdk/): serve MCP from your own server with
