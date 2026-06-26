@@ -4,6 +4,12 @@ const MAX_WIDTH = 720
 const ASPECT = 720 / 240
 const BASE_FONT_SIZE = 220
 const RESOLUTION = 3
+// Cap the effective supersample. On a 3x-DPR phone dpr*RESOLUTION = 9, which
+// allocates a huge canvas backing store and makes every fill ~dpr² costlier for
+// no visible gain. 3 is still well past retina.
+const MAX_DPR = 3
+// Per-frame velocity below which the field counts as at rest.
+const REST_EPS = 0.01
 const SPACING = 4
 const CROSS_ARM = 1
 const REPULSION_RADIUS = 110
@@ -81,6 +87,12 @@ export function ParticleField() {
         // shockwave timer begins.
         let inViewport = false
         let entryReady = false
+        let pointerInside = false
+        const reduced = !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+
+        const schedule = () => {
+            if (!raf && inViewport && !reduced) raf = requestAnimationFrame(tick)
+        }
 
         const buildParticles = () => {
             const off = document.createElement("canvas")
@@ -128,7 +140,9 @@ export function ParticleField() {
                     const bj = (x / SPACING) | 0
                     const threshold = (BAYER_8[bi % 8][bj % 8] + 0.5) / 64
                     if (intensity <= threshold) continue
-                    next.push({ x, y, vx: 0, vy: 0, hx: x, hy: y, spawned: entryDone })
+                    // Under reduced-motion there's no entry shockwave, so every
+                    // particle starts settled at its home position.
+                    next.push({ x, y, vx: 0, vy: 0, hx: x, hy: y, spawned: entryDone || reduced })
                 }
             }
             particles = next
@@ -139,7 +153,7 @@ export function ParticleField() {
             height = width / ASPECT
             scale = width / MAX_WIDTH
 
-            const dpr = (window.devicePixelRatio || 1) * RESOLUTION
+            const dpr = Math.min((window.devicePixelRatio || 1) * RESOLUTION, MAX_DPR)
             canvas.width = Math.round(width * dpr)
             canvas.height = Math.round(height * dpr)
             canvas.style.width = `${width}px`
@@ -155,33 +169,38 @@ export function ParticleField() {
         const io = new IntersectionObserver(
             ([entry]) => {
                 inViewport = entry.isIntersecting
+                // Wake the loop when we scroll into view (also triggers the
+                // entry shockwave); it self-idles again once offscreen.
+                if (inViewport) schedule()
             },
             { threshold: 0.05 },
         )
         io.observe(canvas)
 
-        const startTick = () => {
-            if (!raf) raf = requestAnimationFrame(tick)
-        }
-
         if (document.fonts?.ready) {
             document.fonts.ready.then(() => {
                 buildParticles()
-                startTick()
+                if (reduced) tick()
+                else schedule()
             })
         } else {
-            startTick()
+            if (reduced) tick()
+            else schedule()
         }
 
         const onMove = (e: MouseEvent) => {
             const rect = canvas.getBoundingClientRect()
             mouseX = e.clientX - rect.left
             mouseY = e.clientY - rect.top
+            pointerInside = true
+            schedule()
         }
 
         const onLeave = () => {
             mouseX = -9999
             mouseY = -9999
+            pointerInside = false
+            schedule()
         }
 
         const onClick = (e: MouseEvent) => {
@@ -191,14 +210,19 @@ export function ParticleField() {
                 y: e.clientY - rect.top,
                 radius: 0,
             })
+            schedule()
         }
 
-        window.addEventListener("mousemove", onMove)
-        window.addEventListener("mouseleave", onLeave)
-        canvas.addEventListener("click", onClick)
+        if (!reduced) {
+            window.addEventListener("mousemove", onMove)
+            window.addEventListener("mouseleave", onLeave)
+            canvas.addEventListener("click", onClick)
+        }
 
         const tick = () => {
+            raf = 0
             ctx.clearRect(0, 0, width, height)
+            let energy = 0
 
             const waveSpeed = WAVE_SPEED * scale
             const waveBand = WAVE_BAND * scale
@@ -238,7 +262,7 @@ export function ParticleField() {
 
                 const dx = p.x - mouseX
                 const dy = p.y - mouseY
-                const dist = Math.hypot(dx, dy)
+                const dist = Math.sqrt(dx * dx + dy * dy)
 
                 const linear = Math.min(1, dist / colorRadius)
                 const t = linear * linear * (3 - 2 * linear)
@@ -257,7 +281,7 @@ export function ParticleField() {
                 for (const w of waves) {
                     const wdx = p.x - w.x
                     const wdy = p.y - w.y
-                    const wdist = Math.hypot(wdx, wdy)
+                    const wdist = Math.sqrt(wdx * wdx + wdy * wdy)
                     const delta = Math.abs(wdist - w.radius)
                     if (delta < waveBand && wdist > 0) {
                         const bandFalloff = 1 - delta / waveBand
@@ -274,6 +298,7 @@ export function ParticleField() {
                 p.vy *= DAMPING
                 p.x += p.vx
                 p.y += p.vy
+                energy += Math.abs(p.vx) + Math.abs(p.vy)
 
                 const px = Math.round(p.x)
                 const py = Math.round(p.y)
@@ -281,7 +306,17 @@ export function ParticleField() {
                 ctx.fillRect(px, py - CROSS_ARM, 1, CROSS_ARM * 2 + 1)
             }
 
-            raf = requestAnimationFrame(tick)
+            // Keep animating while the entry is still running, a click-wave is
+            // alive, the pointer is engaged, or anything is still moving. Once
+            // it all settles (the common case on touch, where there's no
+            // pointer) we stop scheduling frames until an event wakes us.
+            const entryDone =
+                entryStart !== null && performance.now() - entryStart >= ENTRY_DURATION
+            const active =
+                !entryDone || waves.length > 0 || pointerInside || energy > REST_EPS
+            if (inViewport && !reduced && active) {
+                raf = requestAnimationFrame(tick)
+            }
         }
 
         return () => {

@@ -7,6 +7,7 @@ import {Faq} from "../components/Faq"
 import {Reveal} from "../components/Reveal"
 import {InstallTabs} from "../components/InstallTabs"
 import WhyGrid from "../components/WhyGrid.astro"
+import {AgentTerminal} from "../components/AgentTerminal"
 import {codeToHtml} from "shiki"
 import {TS_CODE} from "../lib/snippets"
 
@@ -24,8 +25,11 @@ const highlighted = {
 		<div class="w-full flex flex-col gap-8 max-w-3xl mx-auto px-4 pt-24 md:pt-32 pb-16 selection:bg-blue-800/20">
 			<ParticleField client:load />
 			<h1 class="text-center text-neutral-200 text-4xl md:text-5xl text-balanced font-medium -mt-4 leading-9 md:leading-14 tracking-tight motion-preset-blur-up-lg motion-delay-300">
-				Let agents query your database. Just not all of it.
+				Let agents query your database. You decide what they see.
 			</h1>
+			<p class="text-center text-fg-muted text-balanced max-w-xl mx-auto -mt-2 motion-preset-blur-up-lg motion-delay-400">
+				Your agent sends a structured query, never raw SQL. valv checks it against your schema, scopes it to the caller, and runs it. In your app or over MCP.
+			</p>
 			<div class="flex flex-col items-center md:flex-row gap-4 mx-auto mt-4 motion-preset-blur-up-lg motion-delay-500">
 				<a href="/docs/" class="h-12 w-52 flex items-center justify-center md:w-40 rounded-sm bg-fg text-bg text-sm font-medium cursor-pointer hover:-translate-y-0.5 transition-all">
 					Quick Start
@@ -42,15 +46,18 @@ const highlighted = {
 				<ParticleDivider className="-mt-20 -mb-20" client:load />
 				<Reveal client:visible className="w-full flex flex-col gap-4">
 					<div class="relative left-1/2 w-[92vw] max-w-5xl -translate-x-1/2 flex flex-col gap-10">
-						<h2 class="text-2xl font-medium text-center">Why use it?</h2>
+						<h2 class="text-2xl font-medium text-center">Why valv</h2>
 						<WhyGrid />
 					</div>
 				</Reveal>
-				<Reveal client:visible className="w-full flex flex-col gap-4">
-					<h2 class="text-2xl font-medium text-center">Benchmarks</h2>
-					<div class="w-full h-[300px] rounded-sm ring-[1px] ring-border bg-bg flex items-center justify-center">
-						<span class="text-xs font-medium opacity-30">benchmarks</span>
+				<Reveal client:visible className="w-full flex flex-col gap-5">
+					<div class="flex flex-col gap-2 items-center">
+						<h2 class="text-2xl font-medium text-center">Same agent, different caller.</h2>
+						<p class="text-sm text-fg-muted text-center max-w-md">
+							Switch the caller. valv applies each one's policy per request, so the same question returns a different answer.
+						</p>
 					</div>
+					<AgentTerminal client:visible />
 				</Reveal>
 				<Reveal client:visible className="w-full flex flex-col gap-4">
 					<h2 class="text-2xl font-medium text-center">FAQ</h2>

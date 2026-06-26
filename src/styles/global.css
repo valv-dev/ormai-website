@@ -45,3 +45,17 @@ html {
   padding: 1.25rem;
   font-family: var(--font-mono);
 }
+
+/* AgentTerminal: each line slides in; lines that change between personas flash. */
+@keyframes valv-line-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes valv-flash-ok { from { background-color: rgba(108, 197, 138, 0.16); } to { background-color: transparent; } }
+@keyframes valv-flash-no { from { background-color: rgba(224, 101, 79, 0.16); } to { background-color: transparent; } }
+.valv-line    { animation: valv-line-in 0.34s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+.valv-flash-ok { animation: valv-line-in 0.34s cubic-bezier(0.2, 0.7, 0.3, 1) both, valv-flash-ok 1.1s 0.1s ease-out both; }
+.valv-flash-no { animation: valv-line-in 0.34s cubic-bezier(0.2, 0.7, 0.3, 1) both, valv-flash-no 1.1s 0.1s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .valv-line, .valv-flash-ok, .valv-flash-no { animation: none; }
+}

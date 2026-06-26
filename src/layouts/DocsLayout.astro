@@ -4,6 +4,8 @@ import { docsNav } from "../lib/docsNav";
 
 const { frontmatter } = Astro.props;
 const title = frontmatter?.title ? `${frontmatter.title} · valv docs` : "valv docs";
+const description =
+	frontmatter?.description ?? "Documentation for valv - safe, scoped database access for AI agents.";
 
 const pathname = Astro.url.pathname.replace(/\/$/, "") + "/";
 const isActive = (href: string) => pathname === href;
@@ -22,7 +24,7 @@ const rawMarkdown = (sources[`/src/pages/docs/${slug}.mdx`] ?? "").replace(
 );
 ---
 
-<Layout title={title}>
+<Layout title={title} description={description}>
 	<div class="min-h-screen">
 		<header class="sticky top-0 z-20 bg-bg/80 backdrop-blur-md">
 			<div class="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">

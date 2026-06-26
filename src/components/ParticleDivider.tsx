@@ -12,6 +12,12 @@ const REPULSION_FORCE = 2.5
 const SPRING = 0.06
 const DAMPING = 0.82
 const RESOLUTION = 2
+// Cap the effective supersample so high-DPR phones don't allocate an oversized
+// canvas backing store (fill cost scales ~dpr²) for no visible gain.
+const MAX_DPR = 3
+// Below this per-frame velocity the row is at rest; stop scheduling frames
+// until a pointer or resize wakes it.
+const REST_EPS = 0.01
 
 // Same Bayer matrix the other particle components use for dithered dropout.
 const BAYER_8 = [
@@ -56,6 +62,13 @@ export function ParticleDivider({ className = "h-12" }: ParticleDividerProps = {
         let mouseX = -9999
         let mouseY = -9999
         let raf = 0
+        let inView = false
+        let pointerInside = false
+        const reduced = !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+
+        const schedule = () => {
+            if (!raf && inView && !reduced) raf = requestAnimationFrame(tick)
+        }
 
         const buildParticles = () => {
             const next: Particle[] = []
@@ -105,39 +118,59 @@ export function ParticleDivider({ className = "h-12" }: ParticleDividerProps = {
         const resize = () => {
             width = container.clientWidth
             height = container.clientHeight
-            const dpr = (window.devicePixelRatio || 1) * RESOLUTION
+            const dpr = Math.min((window.devicePixelRatio || 1) * RESOLUTION, MAX_DPR)
             canvas.width = Math.round(width * dpr)
             canvas.height = Math.round(height * dpr)
             canvas.style.width = `${width}px`
             canvas.style.height = `${height}px`
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
             buildParticles()
+            if (reduced) tick()
+            else schedule()
         }
 
         const ro = new ResizeObserver(resize)
         ro.observe(container)
 
+        // Only animate while the divider is on screen.
+        const io = new IntersectionObserver(
+            ([entry]) => {
+                inView = entry.isIntersecting
+                if (inView) schedule()
+            },
+            { threshold: 0 },
+        )
+        io.observe(container)
+
         const onMove = (e: MouseEvent) => {
             const rect = canvas.getBoundingClientRect()
             mouseX = e.clientX - rect.left
             mouseY = e.clientY - rect.top
+            pointerInside = true
+            schedule()
         }
 
         const onLeave = () => {
             mouseX = -9999
             mouseY = -9999
+            pointerInside = false
+            schedule()
         }
 
-        window.addEventListener("mousemove", onMove)
-        window.addEventListener("mouseleave", onLeave)
+        if (!reduced) {
+            window.addEventListener("mousemove", onMove)
+            window.addEventListener("mouseleave", onLeave)
+        }
 
         const tick = () => {
+            raf = 0
             ctx.clearRect(0, 0, width, height)
 
+            let energy = 0
             for (const p of particles) {
                 const dx = p.x - mouseX
                 const dy = p.y - mouseY
-                const dist = Math.hypot(dx, dy)
+                const dist = Math.sqrt(dx * dx + dy * dy)
 
                 if (dist < REPULSION_RADIUS && dist > 0) {
                     const falloff = 1 - dist / REPULSION_RADIUS
@@ -152,6 +185,7 @@ export function ParticleDivider({ className = "h-12" }: ParticleDividerProps = {
                 p.vy *= DAMPING
                 p.x += p.vx
                 p.y += p.vy
+                energy += Math.abs(p.vx) + Math.abs(p.vy)
 
                 ctx.fillStyle = `rgba(255,255,255,${p.alpha})`
                 const px = Math.round(p.x)
@@ -160,13 +194,19 @@ export function ParticleDivider({ className = "h-12" }: ParticleDividerProps = {
                 ctx.fillRect(px, py - CROSS_ARM, 1, CROSS_ARM * 2 + 1)
             }
 
-            raf = requestAnimationFrame(tick)
+            // Idle once at rest with no pointer; wake on the next event.
+            if (inView && !reduced && (energy > REST_EPS || pointerInside)) {
+                raf = requestAnimationFrame(tick)
+            }
         }
-        raf = requestAnimationFrame(tick)
+
+        if (reduced) tick()
+        else schedule()
 
         return () => {
             cancelAnimationFrame(raf)
             ro.disconnect()
+            io.disconnect()
             window.removeEventListener("mousemove", onMove)
             window.removeEventListener("mouseleave", onLeave)
         }
