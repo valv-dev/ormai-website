@@ -213,10 +213,43 @@ export function ParticleField() {
             schedule()
         }
 
+        const onTouchMove = (e: TouchEvent) => {
+            if (e.touches.length === 0) return
+            const touch = e.touches[0]
+            const rect = canvas.getBoundingClientRect()
+            mouseX = touch.clientX - rect.left
+            mouseY = touch.clientY - rect.top
+            pointerInside = true
+            schedule()
+        }
+
+        const onTouchEnd = () => {
+            mouseX = -9999
+            mouseY = -9999
+            pointerInside = false
+            schedule()
+        }
+
+        const onTouchStart = (e: TouchEvent) => {
+            if (e.touches.length === 0) return
+            const touch = e.touches[0]
+            const rect = canvas.getBoundingClientRect()
+            waves.push({
+                x: touch.clientX - rect.left,
+                y: touch.clientY - rect.top,
+                radius: 0,
+            })
+            schedule()
+        }
+
         if (!reduced) {
             window.addEventListener("mousemove", onMove)
             window.addEventListener("mouseleave", onLeave)
             canvas.addEventListener("click", onClick)
+            window.addEventListener("touchmove", onTouchMove, { passive: true })
+            window.addEventListener("touchend", onTouchEnd)
+            window.addEventListener("touchcancel", onTouchEnd)
+            canvas.addEventListener("touchstart", onTouchStart, { passive: true })
         }
 
         const tick = () => {
@@ -326,6 +359,10 @@ export function ParticleField() {
             window.removeEventListener("mousemove", onMove)
             window.removeEventListener("mouseleave", onLeave)
             canvas.removeEventListener("click", onClick)
+            window.removeEventListener("touchmove", onTouchMove)
+            window.removeEventListener("touchend", onTouchEnd)
+            window.removeEventListener("touchcancel", onTouchEnd)
+            canvas.removeEventListener("touchstart", onTouchStart)
         }
     }, [])
 

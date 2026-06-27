@@ -157,9 +157,29 @@ export function ParticleDivider({ className = "h-12" }: ParticleDividerProps = {
             schedule()
         }
 
+        const onTouchMove = (e: TouchEvent) => {
+            if (e.touches.length === 0) return
+            const touch = e.touches[0]
+            const rect = canvas.getBoundingClientRect()
+            mouseX = touch.clientX - rect.left
+            mouseY = touch.clientY - rect.top
+            pointerInside = true
+            schedule()
+        }
+
+        const onTouchEnd = () => {
+            mouseX = -9999
+            mouseY = -9999
+            pointerInside = false
+            schedule()
+        }
+
         if (!reduced) {
             window.addEventListener("mousemove", onMove)
             window.addEventListener("mouseleave", onLeave)
+            window.addEventListener("touchmove", onTouchMove, { passive: true })
+            window.addEventListener("touchend", onTouchEnd)
+            window.addEventListener("touchcancel", onTouchEnd)
         }
 
         const tick = () => {
@@ -209,6 +229,9 @@ export function ParticleDivider({ className = "h-12" }: ParticleDividerProps = {
             io.disconnect()
             window.removeEventListener("mousemove", onMove)
             window.removeEventListener("mouseleave", onLeave)
+            window.removeEventListener("touchmove", onTouchMove)
+            window.removeEventListener("touchend", onTouchEnd)
+            window.removeEventListener("touchcancel", onTouchEnd)
         }
     }, [])
 
