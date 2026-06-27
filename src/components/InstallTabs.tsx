@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Select } from "@base-ui/react/select"
 import { CopyCommand } from "./CopyCommand"
 import type { DbKey } from "../lib/snippets"
@@ -39,6 +39,41 @@ function TsIcon() {
         fillRule="evenodd"
       />
     </svg>
+  )
+}
+
+function LazyVideo() {
+  const ref = useRef<HTMLVideoElement>(null)
+  const [load, setLoad] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el || load) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setLoad(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: "200px" },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [load])
+
+  return (
+    <video
+      ref={ref}
+      src={load ? "/video.mp4" : undefined}
+      poster="/video-poster.webp"
+      preload="none"
+      autoPlay
+      loop
+      muted
+      playsInline
+      className="block w-full aspect-[1636/1080]"
+    />
   )
 }
 
@@ -118,14 +153,7 @@ export function InstallTabs({ highlighted }: InstallTabsProps) {
               dangerouslySetInnerHTML={{ __html: highlighted[db] }}
             />
           ) : (
-            <video
-              src="/video.mp4"
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="block w-full aspect-[1814/1178]"
-            />
+            <LazyVideo />
           )}
         </div>
       </div>
