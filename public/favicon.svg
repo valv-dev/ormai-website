@@ -1,4 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="7" fill="#17181a"/>
-  <text x="16" y="23" font-family="ui-monospace, Menlo, monospace" font-size="20" font-weight="600" fill="#c4b5a0" text-anchor="middle">v</text>
+<svg width="32" height="32" viewBox="0 0 1145 1145" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g clip-path="url(#clip0_405_39)">
+    <path d="M1 572.5C1 101.046 102.046 0 573.5 0C1044.95 0 1146 101.046 1146 572.5C1146 1043.95 1044.95 1145 573.5 1145C102.046 1145 1 1043.95 1 572.5Z" fill="black"/>
+    <path d="M573 971L203 281H482.08C453.067 325.056 434.727 389.944 434.727 462.303C434.727 595.023 496.42 702.614 572.523 702.614C648.626 702.614 710.32 595.023 710.32 462.303C710.32 389.944 691.979 325.056 662.966 281H943L573 971Z" fill="white"/>
+  </g>
+  <defs>
+    <clipPath id="clip0_405_39">
+      <rect width="1145" height="1145" fill="white"/>
+    </clipPath>
+  </defs>
 </svg>

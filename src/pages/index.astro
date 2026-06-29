@@ -21,7 +21,7 @@ const highlighted = {
 <Layout>
 	<div class="relative isolate w-full">
 		<ParticleBackground client:load />
-		<ParticleBackground client:load flipped className="h-[25lvh]" />
+		<ParticleBackground client:load flipped className="h-[40lvh]" />
 		<div class="w-full flex flex-col gap-8 max-w-3xl mx-auto px-4 pt-24 md:pt-32 pb-16 selection:bg-blue-800/20">
 			<ParticleField client:load />
 			<h1 class="text-center text-neutral-200 text-[44px] md:text-[64px] text-balanced font-medium -mt-4 leading-[44px] md:leading-[64px] tracking-[-1px] motion-preset-blur-up-lg motion-delay-300">
@@ -63,15 +63,46 @@ const highlighted = {
 					<h2 class="text-2xl font-medium text-center">FAQ</h2>
 					<Faq client:visible />
 				</Reveal>
+				<Reveal client:visible className="w-full flex flex-col items-center gap-6 pt-8">
+					<div class="flex flex-col items-center gap-3">
+						<h2 class="text-center text-neutral-200 text-3xl md:text-4xl font-medium text-balanced leading-tight tracking-[-0.5px]">
+							Give your agents a database they can't break.
+						</h2>
+						<p class="text-center text-fg-muted text-balanced max-w-md leading-6">
+							Ship validated, policy-aware queries in minutes. Free and open source.
+						</p>
+					</div>
+					<div class="flex flex-col items-center md:flex-row gap-4">
+						<a href="/docs/quickstart" class="h-12 w-52 flex items-center justify-center md:w-40 rounded-sm bg-fg text-bg text-sm font-medium cursor-pointer hover:-translate-y-0.5 transition-all">
+							Quick Start
+						</a>
+						<a href="https://github.com/valv-dev/valv" target="_blank" rel="noreferrer" class="h-12 w-52 md:w-44 flex flex-row items-center gap-0.5 justify-center rounded-sm bg-bg md:ring-[0.5px] ring-fg-faint text-sm text-fg-muted cursor-pointer hover:text-fg hover:ring-fg-muted transition-all hover:-translate-y-0.5">
+							<i class="ph ph-star pr-1 inline-block"></i>
+							Star on GitHub
+						</a>
+					</div>
+					<a
+						href="https://x.com/intent/post?text=valv%20lets%20agents%20query%20your%20database%20with%20confidence.%20Structured%2C%20validated%20queries%20instead%20of%20raw%20SQL.&url=https%3A%2F%2Fvalv.sh"
+						target="_blank"
+						rel="noreferrer"
+						class="flex items-center gap-1.5 text-sm text-fg-subtle hover:text-fg transition-colors mt-2"
+					>
+						<i class="ph ph-x-logo"></i>
+						Share valv
+					</a>
+				</Reveal>
 			</div>
 		</div>
-		<footer class="relative w-full max-w-3xl mx-auto px-4 pb-16 flex items-center justify-center gap-6 text-sm text-fg-muted">
-			<a href="https://github.com/valv-dev/valv" target="_blank" rel="noreferrer" class="flex items-center gap-1.5 hover:text-fg transition-colors">
-				<i class="ph ph-github-logo"></i>
-			</a>
-			<a href="/docs/" class="hover:text-fg transition-colors">
-				Docs
-			</a>
+		<footer class="relative w-full">
+			<div class="w-full max-w-5xl mx-auto px-6 pt-16 pb-10">
+				<div class="flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between">
+					<p class="text-xs text-fg-faint">© 2026 valv. All rights reserved.</p>
+					<div class="flex items-center gap-6 text-xs text-fg-muted">
+						<a href="/docs/" class="hover:text-fg transition-colors">Docs</a>
+						<a href="https://github.com/valv-dev/valv" target="_blank" rel="noreferrer" class="hover:text-fg transition-colors">GitHub</a>
+					</div>
+				</div>
+			</div>
 		</footer>
 	</div>
 </Layout>
